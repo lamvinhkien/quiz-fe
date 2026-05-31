@@ -58,22 +58,29 @@ const QuestionExam = (props) => {
     const handleSubmitQuiz = async () => {
         let _questionList = [...questionList]
         let answers = _questionList.flatMap(question => question.Answers.filter(answer => answer.correctAnswer === true))
-        let res = await SubmitAnswer(answers, props.quizId)
         setIsLoading(true)
-        if (res) {
-            if (res.error === 0) {
-                setTimeUp(true)
-                setScoreFinish(res.data.score)
-                setCheckFailedPoint(res.data.check)
-                setAnswerFinish(res.data.result.Questions)
-                setQuestionIndex(0)
-                setIsLoading(false)
-                if (showConfirm === true) {
-                    handleConfirm()
+        try {
+            let res = await SubmitAnswer(answers, props.quizId)
+
+            if (res) {
+                if (res.error === 0) {
+                    setTimeUp(true)
+                    setScoreFinish(res.data.score)
+                    setCheckFailedPoint(res.data.check)
+                    setAnswerFinish(res.data.result.Questions)
+                    setQuestionIndex(0)
+
+                    if (showConfirm === true) {
+                        handleConfirm()
+                    }
+                    return
                 }
                 return
             }
-            return
+        } catch (error) {
+            console.error("Lỗi khi nộp bài:", error)
+        } finally {
+            setIsLoading(false)
         }
     }
     const handleTimeUp = () => {

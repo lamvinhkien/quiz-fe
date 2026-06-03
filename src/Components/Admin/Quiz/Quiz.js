@@ -17,14 +17,23 @@ const Quiz = () => {
     const [offset, setOffset] = useState(0)
     const [totalPage, setTotalPage] = useState(0)
     const [condition, setCondition] = useState({})
+    const [isLoading, setIsLoading] = useState(false)
 
     const handleGetAllQuiz = async () => {
-        let res = await GetAllQuizPagination(page, limit, condition)
-        if (res && res.data) {
-            setQuizList(res.data)
-            setTotalPage(res.totalPage)
-            setOffset(res.offset)
+        setIsLoading(true)
+        try {
+            let res = await GetAllQuizPagination(page, limit, condition)
+            if (res && res.data) {
+                setQuizList(res.data)
+                setTotalPage(res.totalPage)
+                setOffset(res.offset)
+            }
+        } catch (error) {
+            console.error(error)
+        } finally {
+            setIsLoading(false)
         }
+
     }
     const handleShowCreate = () => {
         setShowCreate(!showCreate)
@@ -109,21 +118,36 @@ const Quiz = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {quizList.length > 0 ? quizList.map((item, index) => {
-                                return (
-                                    <tr key={index}>
-                                        <td style={{ width: '80px' }}>{index + 1 + offset}</td>
-                                        <td className="hiddenTD">{item.name}</td>
-                                        <td>{item.Category ? item.Category.name : ''}</td>
-                                        <td>
-                                            <button className="btn btn-primary" onClick={() => { redirectToQuizId(item.id) }}><i className="fa fa-pencil-square-o"></i></button>
+                            {
+                                isLoading ?
+                                    <tr>
+                                        <td colSpan={6} className="text-center">
+                                            <div
+                                                className="spinner-border"
+                                                role="status"
+                                            >
+                                                <span className="visually-hidden">
+                                                    Loading...
+                                                </span>
+                                            </div>
                                         </td>
                                     </tr>
-                                )
-                            }) :
-                                <tr>
-                                    <td colSpan={6} className='text-center fst-italic'><span>Không có bài thi nào.....</span></td>
-                                </tr>
+                                    :
+                                    quizList.length > 0 ? quizList.map((item, index) => {
+                                        return (
+                                            <tr key={index}>
+                                                <td style={{ width: '80px' }}>{index + 1 + offset}</td>
+                                                <td className="hiddenTD">{item.name}</td>
+                                                <td>{item.Category ? item.Category.name : ''}</td>
+                                                <td>
+                                                    <button className="btn btn-primary" onClick={() => { redirectToQuizId(item.id) }}><i className="fa fa-pencil-square-o"></i></button>
+                                                </td>
+                                            </tr>
+                                        )
+                                    }) :
+                                        <tr>
+                                            <td colSpan={6} className='text-center fst-italic'><span>Không có bài thi nào.....</span></td>
+                                        </tr>
                             }
                         </tbody>
                     </table>

@@ -266,7 +266,6 @@ const ModalCategory = (props) => {
                                     {
                                         isUpdating ?
                                             <>
-                                                Đang cập nhật
                                                 <span
                                                     className="spinner-border spinner-border-sm ms-2"
                                                     role="status"
@@ -287,7 +286,6 @@ const ModalCategory = (props) => {
                                     {
                                         isCreating ?
                                             <>
-                                                Đang thêm
                                                 <span
                                                     className="spinner-border spinner-border-sm ms-2"
                                                     role="status"

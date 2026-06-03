@@ -95,7 +95,24 @@ const Quiz = () => {
                                 </div>
                             </div>
                             <div className='col-12 col-lg-2 mt-2 mt-lg-0'>
-                                <button className='btn btn-primary w-100' onClick={() => { handleRefresh() }}><i className="fa fa-refresh"></i> Làm mới</button>
+                                <button
+                                    disabled={isLoading}
+                                    className='btn btn-primary w-100'
+                                    onClick={() => { handleRefresh() }}><i className="fa fa-refresh"></i>
+                                    {
+                                        isLoading ?
+                                            <>
+                                                <span
+                                                    className="spinner-border spinner-border-sm ms-2"
+                                                    role="status"
+                                                />
+                                            </>
+                                            :
+                                            <>
+                                                <i className="fa fa-refresh"></i> Làm mới
+                                            </>
+                                    }
+                                </button>
                             </div>
                             <div className='col-12 col-lg-2 mt-2 mt-lg-0'>
                                 <button className='btn btn-success w-100' onClick={() => { handleShowCreate() }}><i className="fa fa-plus-circle"></i> Thêm bài thi</button>

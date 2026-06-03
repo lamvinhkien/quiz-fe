@@ -122,7 +122,7 @@ const QuizInfo = (props) => {
                             <label className='fs-4 fw-bold title-color'><i className="fa fa-info-circle"></i> Thông tin bài thi</label>
                         </div>
                         <div className='col-12 col-lg-2 d-flex justify-content-end mt-2 mt-lg-0'>
-                            <button className='btn btn-outline-dark w-100' onClick={() => { backToAdmin() }} disabled={isDeleting}>
+                            <button className='btn btn-outline-dark w-100' onClick={() => { backToAdmin() }} disabled={isDisabled}>
                                 <i className="fa fa-undo"></i> Quay lại
                             </button>
                         </div>

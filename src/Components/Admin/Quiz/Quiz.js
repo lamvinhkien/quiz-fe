@@ -98,7 +98,7 @@ const Quiz = () => {
                                 <button
                                     disabled={isLoading}
                                     className='btn btn-primary w-100'
-                                    onClick={() => { handleRefresh() }}><i className="fa fa-refresh"></i>
+                                    onClick={() => { handleRefresh() }}>
                                     {
                                         isLoading ?
                                             <>

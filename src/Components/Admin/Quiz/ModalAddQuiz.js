@@ -13,6 +13,7 @@ const ModalAddQuiz = (props) => {
     const [numOfCorrect, setNumOfCorrect] = useState(1)
     const [categoryId, setCategoryId] = useState('')
     const [listCategory, setListCategory] = useState([])
+    const [isLoading, setIsLoading] = useState(false)
 
     const handleClose = () => {
         props.handleShow()
@@ -40,13 +41,25 @@ const ModalAddQuiz = (props) => {
             categoryId: categoryId ? categoryId : ''
         }
 
-        let res = await CreateQuiz(data)
-        if (res.error === 1) {
-            toast.error(res.message)
-            return
+        setIsLoading(true)
+
+        try {
+            let res = await CreateQuiz(data)
+
+            if (res.error === 1) {
+                toast.error(res.message)
+                return
+            }
+
+            handleClose()
+            toast.success(res.message)
+
+        } catch (error) {
+            console.error(error)
+            toast.error('Có lỗi xảy ra khi thêm bài thi')
+        } finally {
+            setIsLoading(false)
         }
-        handleClose()
-        toast.success(res.message)
     }
 
     useEffect(() => {
@@ -103,8 +116,35 @@ const ModalAddQuiz = (props) => {
                 </Container>
             </Modal.Body>
             <Modal.Footer>
-                <Button onClick={handleClose} variant='secondary'>Đóng</Button>
-                <Button onClick={() => { handleAddQuiz() }} variant='success'>Thêm</Button>
+                <Button
+                    onClick={handleClose}
+                    variant='secondary'
+                    disabled={isLoading}
+                >
+                    Đóng
+                </Button>
+                <Button
+                    onClick={handleAddQuiz}
+                    variant='success'
+                    disabled={isLoading}
+                >
+                    {
+                        isLoading ?
+                            <>
+                                <span>Đang thêm</span>
+                                <div
+                                    className="spinner-border spinner-border-sm ms-2"
+                                    role="status"
+                                >
+                                    <span className="visually-hidden">
+                                        Loading...
+                                    </span>
+                                </div>
+                            </>
+                            :
+                            'Thêm'
+                    }
+                </Button>
             </Modal.Footer>
         </Modal>
     )

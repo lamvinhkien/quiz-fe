@@ -16,6 +16,10 @@ const ModalCategory = (props) => {
     const [offset, setOffset] = useState(0)
     const [totalPage, setTotalPage] = useState(0)
     const [showDelete, setShowDelete] = useState(false)
+    const [isLoadingTable, setIsLoadingTable] = useState(false)
+    const [isCreating, setIsCreating] = useState(false)
+    const [isUpdating, setIsUpdating] = useState(false)
+    const [isDeleting, setIsDeleting] = useState(false)
 
     const handleChangeName = (event) => {
         setName(event)
@@ -29,11 +33,20 @@ const ModalCategory = (props) => {
         setPage(event.selected + 1)
     }
     const handleGetCategory = async () => {
-        let res = await GetCategoryPagination(page, limit)
-        if (res && res.error === 0) {
-            setListCategory(res.data.category)
-            setOffset(res.data.offset)
-            setTotalPage(res.data.totalPage)
+        setIsLoadingTable(true)
+
+        try {
+            let res = await GetCategoryPagination(page, limit)
+
+            if (res && res.error === 0) {
+                setListCategory(res.data.category)
+                setOffset(res.data.offset)
+                setTotalPage(res.data.totalPage)
+            }
+        } catch (error) {
+            console.error(error)
+        } finally {
+            setIsLoadingTable(false)
         }
     }
     const handleChoose = (id, name) => {
@@ -45,41 +58,94 @@ const ModalCategory = (props) => {
         setName('')
     }
     const handleCreate = async () => {
-        if (name === '') return toast.error("Vui lòng nhập tên danh mục.")
-        let res = await CreateCategory(name)
-        if (res && res.error === 0) {
-            handleGetCategory()
-            setName('')
-            setIdCategory('')
-            toast.success(res.message)
+        if (name === '') {
+            toast.error("Vui lòng nhập tên danh mục.")
             return
         }
-        toast.error(res.message)
+
+        setIsCreating(true)
+
+        try {
+            let res = await CreateCategory(name)
+
+            if (res && res.error === 0) {
+                await handleGetCategory()
+
+                setName('')
+                setIdCategory('')
+
+                toast.success(res.message)
+                return
+            }
+
+            toast.error(res.message)
+
+        } catch (error) {
+            console.error(error)
+            toast.error("Có lỗi xảy ra")
+        } finally {
+            setIsCreating(false)
+        }
     }
     const handleUpdate = async () => {
-        if (idCategory === '') return toast.error("Vui lòng chọn một danh mục để cập nhật.")
-        if (name === '') return toast.error("Vui lòng nhập tên danh mục.")
-        let res = await UpdateCategory(idCategory, name)
-        if (res && res.error === 0) {
-            handleGetCategory()
-            setName('')
-            setIdCategory('')
-            toast.success(res.message)
-            return
+        if (idCategory === '') {
+            return toast.error("Vui lòng chọn một danh mục để cập nhật.")
         }
-        toast.error(res.message)
+
+        if (name === '') {
+            return toast.error("Vui lòng nhập tên danh mục.")
+        }
+
+        setIsUpdating(true)
+
+        try {
+            let res = await UpdateCategory(idCategory, name)
+
+            if (res && res.error === 0) {
+                await handleGetCategory()
+
+                setName('')
+                setIdCategory('')
+
+                toast.success(res.message)
+                return
+            }
+
+            toast.error(res.message)
+
+        } catch (error) {
+            console.error(error)
+            toast.error("Có lỗi xảy ra")
+        } finally {
+            setIsUpdating(false)
+        }
     }
     const handleDelete = async () => {
-        let res = await DeleteCategory(idCategory)
-        if (res && res.error === 0) {
-            handleGetCategory()
-            setName('')
-            setIdCategory('')
-            setShowDelete(!showDelete)
-            toast.success(res.message)
-            return
+        setIsDeleting(true)
+
+        try {
+            let res = await DeleteCategory(idCategory)
+
+            if (res && res.error === 0) {
+                await handleGetCategory()
+
+                setName('')
+                setIdCategory('')
+
+                setShowDelete(false)
+
+                toast.success(res.message)
+                return
+            }
+
+            toast.error(res.message)
+
+        } catch (error) {
+            console.error(error)
+            toast.error("Có lỗi xảy ra")
+        } finally {
+            setIsDeleting(false)
         }
-        toast.error(res.message)
     }
     const handleShowDelete = () => {
         if (idCategory === '') return toast.error("Vui lòng chọn một danh mục để xoá.")
@@ -110,30 +176,44 @@ const ModalCategory = (props) => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {listCategory.length > 0 ? listCategory.map((item, index) => {
-                                        return (
-                                            <tr key={index} className={item.id === idCategory ? "table-info" : ''}>
-                                                <td>{index + 1 + offset}</td>
-                                                <td className='w-100'>{item.name}</td>
-                                                <td>
-                                                    {
-                                                        idCategory !== '' && item.id === idCategory ?
-                                                            <>
-                                                                <button className="btn btn-danger w-100"
-                                                                    onClick={() => { handleUnChoose() }}
-                                                                ><i className="fa fa-times fs-5"></i></button>
-                                                            </>
-                                                            :
-                                                            <>
-                                                                <button className="btn btn-primary w-100"
-                                                                    onClick={() => { handleChoose(item.id, item.name) }}
-                                                                ><i className="fa fa-pencil-square-o fs-5"></i></button>
-                                                            </>
-                                                    }
-                                                </td>
-                                            </tr>
-                                        )
-                                    }) : <></>}
+                                    {
+                                        isLoadingTable ?
+                                            (
+                                                <tr>
+                                                    <td colSpan="3" className="text-center">
+                                                        <div className="spinner-border" role="status">
+                                                            <span className="visually-hidden">
+                                                                Loading...
+                                                            </span>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            )
+                                            :
+                                            listCategory.length > 0 ? listCategory.map((item, index) => {
+                                                return (
+                                                    <tr key={index} className={item.id === idCategory ? "table-info" : ''}>
+                                                        <td>{index + 1 + offset}</td>
+                                                        <td className='w-100'>{item.name}</td>
+                                                        <td>
+                                                            {
+                                                                idCategory !== '' && item.id === idCategory ?
+                                                                    <>
+                                                                        <button className="btn btn-danger w-100"
+                                                                            onClick={() => { handleUnChoose() }}
+                                                                        ><i className="fa fa-times fs-5"></i></button>
+                                                                    </>
+                                                                    :
+                                                                    <>
+                                                                        <button className="btn btn-primary w-100"
+                                                                            onClick={() => { handleChoose(item.id, item.name) }}
+                                                                        ><i className="fa fa-pencil-square-o fs-5"></i></button>
+                                                                    </>
+                                                            }
+                                                        </td>
+                                                    </tr>
+                                                )
+                                            }) : <></>}
                                 </tbody>
                             </table>
                         </div>
@@ -178,14 +258,44 @@ const ModalCategory = (props) => {
                                 </div>
                             </div>
                             <div className='col-lg-4 d-flex justify-content-end mt-2 mt-lg-0'>
-                                <button className='btn btn-warning me-1' onClick={() => { handleUpdate(); }}>
-                                    Cập nhật
+                                <button
+                                    className='btn btn-warning me-1'
+                                    onClick={handleUpdate}
+                                    disabled={isUpdating}
+                                >
+                                    {
+                                        isUpdating ?
+                                            <>
+                                                Đang cập nhật
+                                                <span
+                                                    className="spinner-border spinner-border-sm ms-2"
+                                                    role="status"
+                                                />
+                                            </>
+                                            :
+                                            'Cập nhật'
+                                    }
                                 </button>
                                 <button className='btn btn-danger me-1' onClick={() => { handleShowDelete(); }}>
                                     Xoá
                                 </button>
-                                <button className='btn btn-success' onClick={() => { handleCreate(); }}>
-                                    Thêm
+                                <button
+                                    className='btn btn-success'
+                                    onClick={handleCreate}
+                                    disabled={isCreating}
+                                >
+                                    {
+                                        isCreating ?
+                                            <>
+                                                Đang thêm
+                                                <span
+                                                    className="spinner-border spinner-border-sm ms-2"
+                                                    role="status"
+                                                />
+                                            </>
+                                            :
+                                            'Thêm'
+                                    }
                                 </button>
                             </div>
                         </div>
@@ -200,6 +310,7 @@ const ModalCategory = (props) => {
                 show={showDelete}
                 hide={handleShowDelete}
                 delete={handleDelete}
+                isDeleting={isDeleting}
             />
         </>
     )

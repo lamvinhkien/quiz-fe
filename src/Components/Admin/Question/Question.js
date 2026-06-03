@@ -20,6 +20,8 @@ const Question = () => {
     const [offset, setOffset] = useState(0)
     const [totalPage, setTotalPage] = useState(0)
     const [condition, setCondition] = useState({})
+    const [isLoadingQuestion, setIsLoadingQuestion] = useState(false)
+    const [isLoadingQuiz, setIsLoadingQuiz] = useState(false)
 
     const handleShowCreate = () => {
         setShowCreate(!showCreate)
@@ -36,20 +38,45 @@ const Question = () => {
         setDataEdit([])
     }
     const getQuestionAnswerAdmin = async () => {
-        let res = await GetQuestionAnswerAdmin(params.id, page, limit, condition)
-        if (res) {
-            setQuestionList(res.data)
-            setTotalPage(res.totalPage)
-            setOffset(res.offset)
+        setIsLoadingQuestion(true)
+
+        try {
+            let res = await GetQuestionAnswerAdmin(
+                params.id,
+                page,
+                limit,
+                condition
+            )
+
+            if (res) {
+                setQuestionList(res.data)
+                setTotalPage(res.totalPage)
+                setOffset(res.offset)
+            }
+        } catch (error) {
+            console.error(error)
+        } finally {
+            setIsLoadingQuestion(false)
         }
     }
     const getQuiz = async () => {
-        let res = await GetQuizAdmin(params.id)
-        if (res && res.data) {
-            setDataQuiz(res.data)
+        setIsLoadingQuiz(true)
+
+        try {
+            let res = await GetQuizAdmin(params.id)
+
+            if (res && res.data) {
+                setDataQuiz(res.data)
+            }
+        } catch (error) {
+            console.error(error)
+        } finally {
+            setIsLoadingQuiz(false)
         }
     }
     const handlePageClick = (event) => {
+        if (isLoadingQuestion) return
+
         setPage(event.selected + 1)
     }
     const handleChangeCondition = (event) => {
@@ -90,7 +117,7 @@ const Question = () => {
                             <div className="col-12 col-lg-5 mt-2 mt-lg-0">
                                 <div className="d-flex justify-content-between align-items-center">
                                     <label className="text-nowrap mx-2">Sắp xếp:</label>
-                                    <select className="form-select"
+                                    <select className="form-select" disabled={isLoadingQuestion}
                                         onChange={(event) => { handleChangeCondition(event.target.value) }}>
                                         <option value={JSON.stringify({})}>Tất cả</option>
                                         <option value={JSON.stringify({ image: { operator: 'ne', value: '' } })}>Có hình ảnh</option>
@@ -101,11 +128,31 @@ const Question = () => {
                                 </div>
                             </div>
                             <div className="col-12 col-lg-3 mt-2 mt-lg-0">
-                                <button className='btn btn-primary w-100' onClick={() => { handleRefresh() }}><i className="fa fa-refresh"></i> Làm mới</button>
-
+                                <button
+                                    className='btn btn-primary w-100'
+                                    onClick={handleRefresh}
+                                    disabled={isLoadingQuestion}
+                                >
+                                    {
+                                        isLoadingQuestion ?
+                                            <>
+                                                Đang tải
+                                                <span
+                                                    className="spinner-border spinner-border-sm ms-2"
+                                                    role="status"
+                                                />
+                                            </>
+                                            :
+                                            <>
+                                                <i className="fa fa-refresh"></i> Làm mới
+                                            </>
+                                    }
+                                </button>
                             </div>
                             <div className="col-12 col-lg-4 mt-2 mt-lg-0">
-                                <button className='btn btn-success w-100' onClick={() => { handleShowCreate() }}><i className="fa fa-plus-circle"></i> Thêm câu hỏi</button>
+                                <button className='btn btn-success w-100'
+                                    disabled={isLoadingQuestion}
+                                    onClick={() => { handleShowCreate() }}><i className="fa fa-plus-circle"></i> Thêm câu hỏi</button>
 
                             </div>
                         </div>
@@ -124,24 +171,41 @@ const Question = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {questionList.length > 0 ? questionList.map((item, index) => {
-                                return (
-                                    <tr key={index}>
-                                        <td style={{ width: '50px' }}>{index + 1 + offset}</td>
-                                        <td style={{ width: '150px', height: '70px' }}>
-                                            <img src={item.image !== '' ? process.env.REACT_APP_IMAGE_BASE_URL + item.image : noneimg} alt={index} width={'100%'} height={'100%'} />
-                                        </td>
-                                        <td className="hiddenTD">{item.name}</td>
-                                        <td>{item.failedPoint ? 'Có' : 'Không'}</td>
-                                        <td>
-                                            <button className="btn btn-primary" onClick={() => { handleShowEdit(item.id) }}><i className="fa fa-pencil-square-o"></i></button>
-                                        </td>
-                                    </tr>
-                                )
-                            }) :
-                                <tr>
-                                    <td colSpan={5} className='text-center fst-italic'><span>Không có câu hỏi nào.....</span></td>
-                                </tr>
+                            {
+                                isLoadingQuestion ?
+                                    (
+                                        <tr>
+                                            <td colSpan={5} className="text-center">
+                                                <div
+                                                    className="spinner-border"
+                                                    role="status"
+                                                >
+                                                    <span className="visually-hidden">
+                                                        Loading...
+                                                    </span>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    )
+                                    :
+                                    questionList.length > 0 ? questionList.map((item, index) => {
+                                        return (
+                                            <tr key={index}>
+                                                <td style={{ width: '50px' }}>{index + 1 + offset}</td>
+                                                <td style={{ width: '150px', height: '70px' }}>
+                                                    <img src={item.image !== '' ? process.env.REACT_APP_IMAGE_BASE_URL + item.image : noneimg} alt={index} width={'100%'} height={'100%'} />
+                                                </td>
+                                                <td className="hiddenTD">{item.name}</td>
+                                                <td>{item.failedPoint ? 'Có' : 'Không'}</td>
+                                                <td>
+                                                    <button className="btn btn-primary" onClick={() => { handleShowEdit(item.id) }}><i className="fa fa-pencil-square-o"></i></button>
+                                                </td>
+                                            </tr>
+                                        )
+                                    }) :
+                                        <tr>
+                                            <td colSpan={5} className='text-center fst-italic'><span>Không có câu hỏi nào.....</span></td>
+                                        </tr>
                             }
                         </tbody>
                     </table>

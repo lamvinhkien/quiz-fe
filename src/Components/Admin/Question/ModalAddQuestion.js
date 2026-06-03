@@ -22,6 +22,7 @@ const ModalAddQuestion = (props) => {
         answer2: { description: '', correctAnswer: false },
     })
     const [previewImage, setPreviewImage] = useState(uploadImg)
+    const [isLoading, setIsLoading] = useState(false)
 
     const handleClose = () => {
         props.handleShow()
@@ -78,25 +79,34 @@ const ModalAddQuestion = (props) => {
     const handleAddQuestionAnswer = async () => {
         let checkCorrect = false
         let checkValue = true
-        Object.entries(listAnswer).forEach(([key, value], index) => {
+
+        Object.entries(listAnswer).forEach(([key, value]) => {
             if (value.correctAnswer === true) {
                 checkCorrect = true
             }
+
             if (value.description === '') {
                 checkValue = false
             }
         })
 
+        if (name.trim() === '') {
+            toast.error('Vui lòng nhập tên câu hỏi.')
+            return
+        }
+
         if (checkValue === false) {
             toast.error('Vui lòng nhập đầy đủ thông tin.')
             return
         }
+
         if (checkCorrect === false) {
             toast.error('Vui lòng chọn một câu trả lời chính xác.')
             return
         }
 
-        let list = JSON.stringify(listAnswer)
+        const list = JSON.stringify(listAnswer)
+
         const formData = new FormData()
         formData.append('name', name)
         formData.append('failedPoint', failedPoint)
@@ -104,16 +114,30 @@ const ModalAddQuestion = (props) => {
         formData.append('quizId', params.id)
         formData.append('listAnswer', list)
 
-        let res = await CreateQuestionAnswer(formData)
-        if (res.error === 1) {
-            toast.error(res.message)
-            return
-        }
+        setIsLoading(true)
 
-        if (res.error === 0) {
-            toast.success(res.message)
-            handleClose()
-            return
+        try {
+            let res = await CreateQuestionAnswer(formData)
+
+            if (res.error === 1) {
+                toast.error(res.message)
+                return
+            }
+
+            if (res.error === 0) {
+                toast.success(res.message)
+
+                props.fetch()
+                handleClose()
+
+                return
+            }
+
+        } catch (error) {
+            console.error(error)
+            toast.error('Có lỗi xảy ra')
+        } finally {
+            setIsLoading(false)
         }
     }
 
@@ -133,6 +157,7 @@ const ModalAddQuestion = (props) => {
                                 <div>
                                     <button
                                         className="btn btn-sm btn-danger"
+                                        disabled={isLoading}
                                         onClick={() => {
                                             handleDeleteImg();
                                         }}
@@ -154,6 +179,7 @@ const ModalAddQuestion = (props) => {
                                     type="file"
                                     hidden
                                     id="img"
+                                    disabled={isLoading}
                                     onChange={(event) => {
                                         handleChangeImage(event.target.files[0]);
                                     }}
@@ -167,6 +193,7 @@ const ModalAddQuestion = (props) => {
                                     <textarea
                                         value={name}
                                         placeholder="Nhập tên câu hỏi tại đây..."
+                                        disabled={isLoading}
                                         className="form-control"
                                         onChange={(event) => {
                                             handleChangeName(event.target.value);
@@ -179,6 +206,7 @@ const ModalAddQuestion = (props) => {
                                     <select
                                         className="form-select"
                                         value={failedPoint}
+                                        disabled={isLoading}
                                         onChange={(event) => {
                                             handleChangeFailedPoint(event.target.value);
                                         }}
@@ -208,6 +236,7 @@ const ModalAddQuestion = (props) => {
                                                 </label>
                                                 <input
                                                     type="radio"
+                                                    disabled={isLoading}
                                                     name="correct"
                                                     id={`correctId-${key}`}
                                                     hidden
@@ -221,6 +250,7 @@ const ModalAddQuestion = (props) => {
                                             </div>
                                             <input
                                                 type="text"
+                                                disabled={isLoading}
                                                 value={value.description}
                                                 placeholder="Nhập câu trả lời..."
                                                 className="form-control mx-2"
@@ -233,6 +263,7 @@ const ModalAddQuestion = (props) => {
                                                 onClick={() => {
                                                     deleteAnswer(key);
                                                 }}
+                                                disabled={isLoading}
                                             >
                                                 <i className="fa fa-trash-o"></i>
                                             </button>
@@ -246,6 +277,7 @@ const ModalAddQuestion = (props) => {
                                         addMoreAnswer();
                                     }}
                                     variant="success"
+                                    disabled={isLoading}
                                 >
                                     Thêm câu trả lời
                                 </Button>
@@ -255,8 +287,31 @@ const ModalAddQuestion = (props) => {
                 </Container>
             </Modal.Body>
             <Modal.Footer>
-                <Button onClick={handleClose} variant='secondary'>Đóng</Button>
-                <Button onClick={() => { handleAddQuestionAnswer() }} variant='success'>Thêm</Button>
+                <Button
+                    onClick={handleClose}
+                    variant='secondary'
+                    disabled={isLoading}
+                >
+                    Đóng
+                </Button>
+                <Button
+                    onClick={handleAddQuestionAnswer}
+                    variant='success'
+                    disabled={isLoading}
+                >
+                    {
+                        isLoading ?
+                            <>
+                                Đang thêm
+                                <span
+                                    className="spinner-border spinner-border-sm ms-2"
+                                    role="status"
+                                />
+                            </>
+                            :
+                            'Thêm'
+                    }
+                </Button>
             </Modal.Footer>
         </Modal>
     )

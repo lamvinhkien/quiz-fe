@@ -12,8 +12,23 @@ function ModalDeleteCategory(props) {
                 <Button variant="secondary" onClick={props.hide}>
                     Đóng
                 </Button>
-                <Button variant="danger" onClick={props.delete}>
-                    Xoá
+                <Button
+                    variant="danger"
+                    onClick={props.delete}
+                    disabled={props.isDeleting}
+                >
+                    {
+                        props.isDeleting ?
+                            <>
+                                Đang xoá
+                                <span
+                                    className="spinner-border spinner-border-sm ms-2"
+                                    role="status"
+                                />
+                            </>
+                            :
+                            'Xác nhận'
+                    }
                 </Button>
             </Modal.Footer>
         </Modal>

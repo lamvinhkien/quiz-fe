@@ -8,6 +8,8 @@ const Login = () => {
     const [username, setUsername] = useState('')
     const [password, setPassword] = useState('')
     const { loginContext } = useContext(UserContext)
+    const [isLoading, setIsLoading] = useState(false)
+
     const navigate = useNavigate()
 
     const handleChangeUsername = (event) => {
@@ -29,18 +31,23 @@ const Login = () => {
             toast.error('Vui lòng nhập tên người dùng và mật khẩu.')
             return
         }
-
-        let res = await loginUser(username, password)
-        if (res) {
-            if (res.error === 0) {
-                loginContext(res.data)
-                navigate('/admin')
+        setIsLoading(true)
+        try {
+            let res = await loginUser(username, password)
+            if (res) {
+                if (res.error === 0) {
+                    loginContext(res.data)
+                    navigate('/admin')
+                    return
+                }
+                toast.error(res.message)
                 return
             }
-            toast.error(res.message)
-            return
+        } catch (error) {
+            console.error("Lỗi đăng nhập:", error)
+        } finally {
+            setIsLoading(false)
         }
-
     }
 
     return (
@@ -60,7 +67,18 @@ const Login = () => {
                             onKeyDown={(event) => handlePressEnter(event)} />
                     </div>
                     <div className='col-12 mb-3'>
-                        <button className='btn btn-success w-100' onClick={handleLogin}>Đăng nhập</button>
+                        {
+                            isLoading === false ?
+                                <button className='btn btn-success w-100' onClick={handleLogin}>Đăng nhập</button>
+                                :
+                                <button className='btn btn-success w-100' disabled>
+                                    <span>Đang đăng nhập</span>
+                                    <div className="spinner-border" role="status" style={{ marginLeft: '8px', width: '18px', height: '18px' }}>
+                                        <span className="visually-hidden">Loading...</span>
+                                    </div>
+                                </button>
+
+                        }
                     </div>
                     <div className='text-end'>
                         <Link to="/" className="text-decoration-none fw-medium">Quay về trang chủ <i className="fa fa-undo"></i></Link>

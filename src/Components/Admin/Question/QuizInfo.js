@@ -17,6 +17,10 @@ const QuizInfo = (props) => {
     })
     const [isShowDelete, setIsShowDelete] = useState(false)
     const [listCategory, setListCategory] = useState([])
+    const [isLoadingCategory, setIsLoadingCategory] = useState(false)
+    const [isSaving, setIsSaving] = useState(false)
+    const [isDeleting, setIsDeleting] = useState(false)
+    const isDisabled = isSaving || isDeleting
 
     const handleChangeValue = (event, key) => {
         let _valueInput = _.cloneDeep(valueInput)
@@ -27,38 +31,73 @@ const QuizInfo = (props) => {
         setIsShowDelete(!isShowDelete)
     }
     const handleDeleteQuiz = async () => {
-        let res = await DeleteQuiz(props.data.id)
-        if (res.error === 1) {
-            toast.error(res.message)
-            return
+        setIsDeleting(true)
+
+        try {
+            let res = await DeleteQuiz(props.data.id)
+
+            if (res.error === 1) {
+                toast.error(res.message)
+                return
+            }
+
+            handleShowDelete()
+
+            toast.success(res.message)
+
+            navigate('/admin')
+
+        } catch (error) {
+            console.error(error)
+            toast.error('Có lỗi xảy ra')
+        } finally {
+            setIsDeleting(false)
         }
-        handleShowDelete()
-        navigate('/admin')
-        toast.success(res.message)
     }
     const handleUpdateQuiz = async () => {
-        let data = {
+        const data = {
             id: props.data.id,
             name: valueInput.name,
             time: valueInput.time,
             numOfCorrect: valueInput.numOfCorrect,
-            categoryId: valueInput.categoryId ? valueInput.categoryId : ''
+            categoryId: valueInput.categoryId || ''
         }
 
-        let res = await UpdateQuiz(data)
-        if (res.error === 1) {
-            toast.error(res.message)
-            return
+        setIsSaving(true)
+
+        try {
+            let res = await UpdateQuiz(data)
+
+            if (res.error === 1) {
+                toast.error(res.message)
+                return
+            }
+
+            toast.success(res.message)
+
+        } catch (error) {
+            console.error(error)
+            toast.error('Có lỗi xảy ra')
+        } finally {
+            setIsSaving(false)
         }
-        toast.success(res.message)
     }
     const backToAdmin = () => {
         navigate('/admin')
     }
     const getCategory = async () => {
-        let res = await GetAllCategory()
-        if (res && res.data) {
-            setListCategory(res.data)
+        setIsLoadingCategory(true)
+
+        try {
+            let res = await GetAllCategory()
+
+            if (res && res.data) {
+                setListCategory(res.data)
+            }
+        } catch (error) {
+            console.error(error)
+        } finally {
+            setIsLoadingCategory(false)
         }
     }
 
@@ -83,12 +122,16 @@ const QuizInfo = (props) => {
                             <label className='fs-4 fw-bold title-color'><i className="fa fa-info-circle"></i> Thông tin bài thi</label>
                         </div>
                         <div className='col-12 col-lg-2 d-flex justify-content-end mt-2 mt-lg-0'>
-                            <button className='btn btn-outline-dark w-100' onClick={() => { backToAdmin() }}>
+                            <button className='btn btn-outline-dark w-100' onClick={() => { backToAdmin() }} disabled={isDeleting}>
                                 <i className="fa fa-undo"></i> Quay lại
                             </button>
                         </div>
                         <div className='col-12 col-lg-2 d-flex justify-content-end mt-2 mt-lg-0'>
-                            <button className='btn btn-danger w-100' onClick={() => { handleShowDelete() }}>
+                            <button
+                                className='btn btn-danger w-100'
+                                onClick={handleShowDelete}
+                                disabled={isSaving || isDeleting}
+                            >
                                 <i className="fa fa-trash-o"></i> Xoá bài thi
                             </button>
                         </div>
@@ -98,12 +141,29 @@ const QuizInfo = (props) => {
                         <div className='col-12 col-lg-10'>
                             <label>Tên bài thi:</label>
                             <input type="text" className='form-control mt-1' value={valueInput.name} placeholder='Nhập tên bài thi...'
-                                onChange={(event) => { handleChangeValue(event.target.value, 'name') }}
+                                onChange={(event) => { handleChangeValue(event.target.value, 'name') }} disabled={isDisabled}
                             />
                         </div>
                         <div className='col-12 col-lg-2 mt-3 mt-lg-0'>
-                            <button className='btn btn-success w-100' onClick={() => { handleUpdateQuiz() }}>
-                                <i className="fa fa-floppy-o"></i> Lưu
+                            <button
+                                className='btn btn-success w-100'
+                                onClick={handleUpdateQuiz}
+                                disabled={isSaving}
+                            >
+                                {
+                                    isSaving ?
+                                        <>
+                                            Đang lưu
+                                            <span
+                                                className="spinner-border spinner-border-sm ms-2"
+                                                role="status"
+                                            />
+                                        </>
+                                        :
+                                        <>
+                                            <i className="fa fa-floppy-o"></i> Lưu
+                                        </>
+                                }
                             </button>
                         </div>
                     </div>
@@ -111,29 +171,32 @@ const QuizInfo = (props) => {
                         <div className="col-12 col-lg-4">
                             <label>Thời gian hoàn thành (Phút):</label>
                             <input type="number" className='form-control mt-1' value={valueInput.time} min={1}
-                                onChange={(event) => { handleChangeValue(event.target.value, 'time') }}
+                                onChange={(event) => { handleChangeValue(event.target.value, 'time') }} disabled={isDisabled}
                             />
                         </div>
                         <div className="col-12 col-lg-4 mt-2 mt-lg-0">
                             <label>Số câu phải đúng:</label>
                             <input type="number" className='form-control mt-1' value={valueInput.numOfCorrect} min={1}
-                                onChange={(event) => { handleChangeValue(event.target.value, 'numOfCorrect') }}
+                                onChange={(event) => { handleChangeValue(event.target.value, 'numOfCorrect') }} disabled={isDisabled}
                             />
                         </div>
                         <div className="col-12 col-lg-4 mt-2 mt-lg-0">
                             <label>Danh mục bài thi:</label>
-                            <select className='form-select mt-1' value={valueInput.categoryId || ''}
+                            <select className='form-select mt-1' value={valueInput.categoryId || ''} disabled={isDisabled}
                                 onChange={(event) => { handleChangeValue(event.target.value, 'categoryId') }}>
                                 <option value=''>Chọn danh mục bài thi</option>
                                 {
-                                    listCategory && listCategory.length > 0 ?
-                                        listCategory.map((item, index) => {
-                                            return (
-                                                <option key={index} value={item.id}>{item.name}</option>
-                                            )
-                                        })
+                                    isLoadingCategory ?
+                                        <option value=''>Đang tải...</option>
                                         :
-                                        <option value=''>Không có danh mục bài thi</option>
+                                        listCategory && listCategory.length > 0 ?
+                                            listCategory.map((item, index) => {
+                                                return (
+                                                    <option key={index} value={item.id}>{item.name}</option>
+                                                )
+                                            })
+                                            :
+                                            <option value=''>Không có danh mục bài thi</option>
                                 }
                             </select>
                         </div>
@@ -145,6 +208,7 @@ const QuizInfo = (props) => {
                 show={isShowDelete}
                 hide={handleShowDelete}
                 delete={handleDeleteQuiz}
+                isDeleting={isDeleting}
             />
 
         </>

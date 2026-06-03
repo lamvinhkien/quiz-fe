@@ -21,6 +21,8 @@ const ModalEditQuestion = (props) => {
     const [listAnswer, setListAnswer] = useState({})
     const [previewImage, setPreviewImage] = useState(uploadImg)
     const [showDelete, setShowDelete] = useState(false)
+    const [isSaving, setIsSaving] = useState(false)
+    const [isDeleting, setIsDeleting] = useState(false)
 
     const handleClose = () => {
         props.handleClose()
@@ -108,27 +110,32 @@ const ModalEditQuestion = (props) => {
     const handleEditQuestionAnswer = async () => {
         let checkCorrect = false
         let checkValue = true
-        Object.entries(listAnswer).forEach(([key, value], index) => {
+
+        Object.entries(listAnswer).forEach(([key, value]) => {
             if (value.correctAnswer === true) {
                 checkCorrect = true
             }
+
             if (value.description === '') {
                 checkValue = false
             }
         })
 
-        if (checkValue === false) {
+        if (!checkValue) {
             toast.error('Vui lòng nhập đầy đủ thông tin.')
             return
         }
-        if (checkCorrect === false) {
+
+        if (!checkCorrect) {
             toast.error('Vui lòng chọn một câu trả lời chính xác.')
             return
         }
 
-        let list = JSON.stringify(listAnswer)
+        const list = JSON.stringify(listAnswer)
+
         const formData = new FormData()
-        formData.append('id', props.data ? props.data.id : '')
+
+        formData.append('id', props.data?.id || '')
         formData.append('name', name)
         formData.append('failedPoint', failedPoint)
         formData.append('questionImg', image)
@@ -136,31 +143,57 @@ const ModalEditQuestion = (props) => {
         formData.append('listAnswer', list)
         formData.append('imgDelete', imgDelete)
 
-        let res = await UpdateQuestionAnswer(formData)
-        if (res.error === 1) {
-            toast.error(res.message)
-            return
-        }
+        setIsSaving(true)
 
-        if (res.error === 0) {
+        try {
+            let res = await UpdateQuestionAnswer(formData)
+
+            if (res.error === 1) {
+                toast.error(res.message)
+                return
+            }
+
             toast.success(res.message)
+
+            props.fetch()
+
             handleClose()
-            return
+
+        } catch (error) {
+            console.error(error)
+            toast.error('Có lỗi xảy ra')
+        } finally {
+            setIsSaving(false)
         }
     }
     const handleShowDelete = () => {
         setShowDelete(!showDelete)
     }
     const handleDelete = async () => {
-        if (props.data && props.data.id) {
+        if (!props.data?.id) return
+
+        setIsDeleting(true)
+
+        try {
             let res = await DeleteQuestion(props.data.id)
+
             if (res.error === 1) {
                 toast.error(res.message)
                 return
             }
+
+            props.fetch()
+
             handleShowDelete()
             handleClose()
+
             toast.success(res.message)
+
+        } catch (error) {
+            console.error(error)
+            toast.error('Có lỗi xảy ra')
+        } finally {
+            setIsDeleting(false)
         }
     }
 
@@ -188,6 +221,7 @@ const ModalEditQuestion = (props) => {
                                     <label className="form-label">Hình ảnh:</label>
                                     <div>
                                         <button
+                                            disabled={isSaving || isDeleting}
                                             className="btn btn-sm btn-danger"
                                             onClick={() => {
                                                 handleDeleteImg();
@@ -207,6 +241,7 @@ const ModalEditQuestion = (props) => {
                                         />
                                     </label>
                                     <input
+                                        disabled={isSaving || isDeleting}
                                         type="file"
                                         hidden
                                         id="imgE"
@@ -221,6 +256,7 @@ const ModalEditQuestion = (props) => {
                                     <Col xs={12} className="">
                                         <label className="form-label">Tên câu hỏi:</label>
                                         <textarea
+                                            disabled={isSaving || isDeleting}
                                             placeholder="Nhập tên câu hỏi tại đây..."
                                             className="form-control"
                                             onChange={(event) => {
@@ -233,6 +269,7 @@ const ModalEditQuestion = (props) => {
                                     <Col xs={12} className="mt-3">
                                         <label className="form-label">Đây là câu điểm liệt?</label>
                                         <select
+                                            disabled={isSaving || isDeleting}
                                             className="form-select"
                                             value={failedPoint}
                                             onChange={(event) => {
@@ -263,6 +300,7 @@ const ModalEditQuestion = (props) => {
                                                         <i className="fa fa-check"></i>
                                                     </label>
                                                     <input
+                                                        disabled={isSaving || isDeleting}
                                                         type="radio"
                                                         name="correct"
                                                         id={`correctId-${key}`}
@@ -278,6 +316,7 @@ const ModalEditQuestion = (props) => {
                                                     </span>
                                                 </div>
                                                 <input
+                                                    disabled={isSaving || isDeleting}
                                                     type="text"
                                                     value={value.description}
                                                     placeholder="Nhập câu trả lời..."
@@ -287,6 +326,7 @@ const ModalEditQuestion = (props) => {
                                                     }}
                                                 />
                                                 <button
+                                                    disabled={isSaving || isDeleting}
                                                     className="btn btn-danger"
                                                     onClick={() => {
                                                         deleteAnswer(key);
@@ -300,6 +340,7 @@ const ModalEditQuestion = (props) => {
                                 })}
                                 <div className="text-center mt-2">
                                     <Button
+                                        disabled={isSaving || isDeleting}
                                         onClick={() => {
                                             addMoreAnswer();
                                         }}
@@ -313,9 +354,40 @@ const ModalEditQuestion = (props) => {
                     </Container>
                 </Modal.Body>
                 <Modal.Footer>
-                    <Button onClick={handleClose} variant='secondary'>Đóng</Button>
-                    <Button onClick={handleShowDelete} variant='danger'>Xoá</Button>
-                    <Button onClick={() => { handleEditQuestionAnswer() }} variant='success'>Lưu</Button>
+                    <Button
+                        onClick={handleClose}
+                        variant='secondary'
+                        disabled={isSaving || isDeleting}
+                    >
+                        Đóng
+                    </Button>
+
+                    <Button
+                        onClick={handleShowDelete}
+                        variant='danger'
+                        disabled={isSaving || isDeleting}
+                    >
+                        Xoá
+                    </Button>
+
+                    <Button
+                        onClick={handleEditQuestionAnswer}
+                        variant='success'
+                        disabled={isSaving}
+                    >
+                        {
+                            isSaving ?
+                                <>
+                                    Đang lưu
+                                    <span
+                                        className="spinner-border spinner-border-sm ms-2"
+                                        role="status"
+                                    />
+                                </>
+                                :
+                                'Lưu'
+                        }
+                    </Button>
                 </Modal.Footer>
             </Modal>
 
@@ -323,6 +395,7 @@ const ModalEditQuestion = (props) => {
                 show={showDelete}
                 hide={handleShowDelete}
                 delete={handleDelete}
+                isDeleting={isDeleting}
             />
         </>
     )

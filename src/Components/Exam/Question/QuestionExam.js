@@ -386,7 +386,7 @@ const QuestionExam = (props) => {
                                             isLoading === false ?
                                                 <button onClick={handleSubmitQuiz} className='btn btn-success' style={{ fontSize: '18px' }}>Nộp bài</button>
                                                 :
-                                                <button className='btn btn-success' style={{ fontSize: '18px' }}>
+                                                <button className='btn btn-success' style={{ fontSize: '18px' }} disabled>
                                                     <span>Đang nộp bài thi</span>
                                                     <div className="spinner-border" role="status" style={{ marginLeft: '8px', width: '18px', height: '18px' }}>
                                                         <span className="visually-hidden">Loading...</span>

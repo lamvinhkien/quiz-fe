@@ -175,18 +175,18 @@ const QuizExam = () => {
                         isStart={isStart}
                     />
                     :
-                    <div className="d-flex justify-content-center align-items-center pt-4 pb-2">
-                        <div className="card text-center border-0 shadow-sm p-4" style={{ maxWidth: '600px', borderRadius: '16px', backgroundColor: '#fff9e6' }}>
+                    <div className="d-flex justify-content-center align-items-center py-4 my-3 shadow-sm" style={{ width: '100%', borderRadius: '16px', backgroundColor: '#fff9e6' }}>
+                        <div className="text-center">
                             <div className="mb-4">
                                 <span className="p-4 bg-warning bg-opacity-25 rounded-circle d-inline-block animate__animated animate__pulse animate__infinite">
                                     <i className="fa fa-book text-warning" style={{ fontSize: '40px' }}></i>
                                 </span>
                             </div>
 
-                            <h3 className="fw-bold text-dark mb-2">Bạn đã sẵn sàng cho bài thi thử?</h3>
+                            <h4 className="fw-bold text-dark mb-2">Bạn đã sẵn sàng cho bài thi thử?</h4>
 
                             <p className="text-muted fs-6 px-3 mb-4">
-                                Hệ thống đã chuẩn bị sẵn kho đề thi phong phú. Vui lòng chọn một đề thi phù hợp ở phía trên để bắt đầu tính giờ làm bài.
+                                Vui lòng chọn một đề thi ở phía trên để bắt đầu tính giờ làm bài.
                             </p>
 
                             <div className="bg-white p-3 rounded-3 border text-start mx-2">

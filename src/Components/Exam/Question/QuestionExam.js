@@ -399,7 +399,7 @@ const QuestionExam = (props) => {
                         </Modal>
                     </>
                     :
-                    <div className='d-flex justify-content-center load-background'>
+                    <div className='d-flex justify-content-center align-items-center load-background'>
                         <div className='text-center' style={{ color: '#38A6F3' }}>
                             <div className="spinner-border" role="status" style={{ height: '54px', width: '54px' }}>
                                 <span className="visually-hidden">Loading...</span>

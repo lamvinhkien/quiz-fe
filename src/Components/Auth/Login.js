@@ -5,8 +5,8 @@ import { toast } from 'react-toastify';
 import { UserContext } from './Context';
 
 const Login = () => {
-    const [username, setUsername] = useState('lamvinhkien')
-    const [password, setPassword] = useState('17092003')
+    const [username, setUsername] = useState('')
+    const [password, setPassword] = useState('')
     const { loginContext } = useContext(UserContext)
     const [isLoading, setIsLoading] = useState(false)
 
